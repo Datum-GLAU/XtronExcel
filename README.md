@@ -15,8 +15,8 @@ This is the Python-based backend engine for Excel GPT. It handles Excel processi
 ```bash```
 cd python_engine
 
-# Install dependencies
-pip install fastapi uvicorn pandas matplotlib openpyxl
+# Install dependencies 
+pip install fastapi uvicorn pandas matplotlib openpyxl schedule xlsxwriter
 
 # Run server
 uvicorn main:app --reload
