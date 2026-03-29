@@ -3,15 +3,73 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../store';
 
+// ── AUTH DEMO DATA ────────────────────────────────────────────────
 const DEMOS = [
   { email: 'admin@gptexcel.com', pass: 'admin123', name: 'Admin User', plan: 'pro' as const },
-  { email: 'demo@gptexcel.com', pass: 'demo123', name: 'Demo User', plan: 'free' as const },
   { email: 'krishna@datum.com', pass: 'datum2026', name: 'Krishna Koushik', plan: 'pro' as const },
 ];
 
+// ── SUBCOMPONENT: GLITCH GRID (ALWAYS ON) ────────────────────────
+function InternalBoxGrid() {
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const COLS = 20, ROWS = 10;
+
+  const getDist = (i: number) => {
+    if (hoverIdx === null) return 99;
+    const hr = Math.floor(hoverIdx / COLS), hc = hoverIdx % COLS;
+    const ir = Math.floor(i / COLS), ic = i % COLS;
+    return Math.sqrt((hr - ir) ** 2 + (hc - ic) ** 2);
+  };
+
+  return (
+    <div 
+      style={{ 
+        position: 'absolute', inset: 0, 
+        display: 'grid', 
+        gridTemplateColumns: `repeat(${COLS}, 1fr)`, 
+        gridTemplateRows: `repeat(${ROWS}, 1fr)`, 
+        pointerEvents: 'all', zIndex: 1 
+      }}
+      onMouseLeave={() => setHoverIdx(null)}
+    >
+      {Array(COLS * ROWS).fill(0).map((_, i) => {
+        const dist = getDist(i);
+        const intensity = dist < 1 ? 1 : dist < 2.2 ? 0.4 : 0;
+        const randomDur = 3 + (i % 5); 
+        const randomDelay = (i % 7) * 0.8;
+
+        return (
+          <div 
+            key={i} 
+            onMouseEnter={() => setHoverIdx(i)}
+            style={{
+              border: '1px solid rgba(255,255,255,0.08)', 
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              animation: `gridGlitch ${randomDur}s infinite`,
+              animationDelay: `${randomDelay}s`,
+              background: intensity > 0 
+                ? `rgba(255,255,255, ${intensity * 0.15})` 
+                : 'transparent',
+              borderColor: intensity > 0 
+                ? `rgba(255,255,255, ${intensity * 0.6})` 
+                : 'rgba(255,255,255,0.08)',
+              boxShadow: intensity === 1 
+                ? 'inset 0 0 20px rgba(255,255,255,0.15), 0 0 30px rgba(255,255,255,0.1)' 
+                : 'none',
+              zIndex: intensity === 1 ? 2 : 1
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+// ── MAIN AUTH COMPONENT ───────────────────────────────────────────
 export default function Auth() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,42 +79,22 @@ export default function Auth() {
   const [showPass, setShowPass] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setTimeout(() => setMounted(true), 50);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    if (!email) {
-      setError('Email is required');
-      return;
-    }
-    if (mode === 'login' && !password) {
-      setError('Password is required');
-      return;
-    }
-    if (mode === 'register' && !name) {
-      setError('Full name is required');
-      return;
-    }
-    if (mode === 'register' && password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
     setLoading(true);
-    await new Promise(r => setTimeout(r, 800));
+    setError('');
+    await new Promise(r => setTimeout(r, 1000));
 
     if (mode === 'login') {
       const found = DEMOS.find(d => d.email === email && d.pass === password);
-      if (!found) {
-        setError('Invalid credentials. Try a demo account below.');
-        setLoading(false);
-        return;
+      if (found) {
+        dispatch(setUser(found));
+        navigate('/dashboard');
+      } else {
+        setError('ACCESS_DENIED: Critical authentication failure.');
       }
-      dispatch(setUser({ name: found.name, email: found.email, plan: found.plan }));
-      navigate('/dashboard');
     } else {
       dispatch(setUser({ name, email, plan: 'free' }));
       navigate('/dashboard');
@@ -64,294 +102,151 @@ export default function Auth() {
     setLoading(false);
   };
 
-  const fillDemo = (idx: number) => {
-    setEmail(DEMOS[idx].email);
-    setPassword(DEMOS[idx].pass);
-    setError('');
-    setMode('login');
-  };
-
   return (
-    <div
-      style={{
-        height: '100vh',
-        background: 'var(--bg)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: 'var(--font-body)',
-        position: 'relative',
-        overflow: 'hidden',
-        opacity: mounted ? 1 : 0,
-        transition: 'opacity 0.3s ease',
-      }}
-    >
+    <div style={{ 
+      height: '100vh', background: '#020202', color: '#fff',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', 
+      position: 'relative', overflow: 'hidden',
+      opacity: mounted ? 1 : 0, transition: 'opacity 0.6s ease'
+    }}>
+      
       <style>{`
-        @keyframes float-1 {
-          0%,100% { transform: translateY(0); }
-          50% { transform: translateY(-16px); }
+        @keyframes gridGlitch {
+          0%, 100% { border-color: rgba(255,255,255,0.08); }
+          50% { border-color: rgba(255,255,255,0.25); }
         }
-        @keyframes float-2 {
-          0%,100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
+        .auth-card { 
+          animation: cardPop 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; 
         }
-        .auth-float-1 { animation: float-1 8s ease infinite; }
-        .auth-float-2 { animation: float-2 11s ease infinite; animation-delay: -3s; }
+        @keyframes cardPop {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .social-btn {
+          flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px;
+          padding: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 14px; cursor: pointer; color: #fff; font-size: 0.85rem; transition: 0.25s;
+          font-weight: 500;
+        }
+        .social-btn:hover { 
+          background: rgba(255,255,255,0.09); 
+          border-color: rgba(255,255,255,0.4);
+          transform: translateY(-2px);
+        }
+        .google-icon { width: 18px; height: 18px; }
+        .ms-icon { width: 18px; height: 18px; color: #fff; }
       `}</style>
 
-      {/* Background pattern */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          backgroundImage: `linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)`,
-          backgroundSize: '32px 32px',
-          opacity: 0.3,
-        }}
-      />
-      <div
-        className="auth-float-1"
-        style={{
-          position: 'absolute',
-          width: 300,
-          height: 300,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, var(--accent-dim) 0%, transparent 70%)',
-          top: -80,
-          right: -60,
-          pointerEvents: 'none',
-        }}
-      />
-      <div
-        className="auth-float-2"
-        style={{
-          position: 'absolute',
-          width: 350,
-          height: 350,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, var(--accent-dim) 0%, transparent 70%)',
-          bottom: -100,
-          left: -80,
-          pointerEvents: 'none',
-        }}
-      />
+      {/* Background Grid */}
+      <div style={{ position: 'absolute', inset: 0, opacity: 0.45 }}>
+        <InternalBoxGrid />
+      </div>
 
-      <button className="btn btn-ghost btn-sm" onClick={() => navigate('/get-started')} style={{ position: 'absolute', top: 16, left: 16 }}>
-        ← Back
+      <button 
+        className="btn btn-ghost btn-sm" 
+        onClick={() => navigate('/')} 
+        style={{ position: 'absolute', top: 24, left: 24, zIndex: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', letterSpacing: '0.05em' }}
+      >
+        ← RETURN_TO_HOME
       </button>
 
-      <div
-        style={{
-          position: 'relative',
-          width: 380,
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 16,
-          padding: '32px 28px',
-          boxShadow: 'var(--shadow-xl)',
-          animation: 'scaleIn 0.2s ease',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 10 }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20, letterSpacing: -0.5, color: 'var(--text)' }}>
-              GPT
-            </span>
-            <span
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 800,
-                fontSize: 20,
-                letterSpacing: -0.5,
-                background: 'var(--accent)',
-                color: 'var(--bg)',
-                padding: '0 8px',
-                borderRadius: 4,
-              }}
-            >
-              EXCEL
-            </span>
+      {/* Auth Card */}
+      <div className="auth-card" style={{ 
+        position: 'relative', zIndex: 5, width: 420, 
+        background: 'rgba(10, 10, 10, 0.85)', 
+        backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.12)', 
+        borderRadius: 28, padding: '44px 40px',
+        boxShadow: '0 50px 120px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.03)'
+      }}>
+        
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+            <span style={{ fontWeight: 900, fontSize: 26, letterSpacing: -1 }}>GPT</span>
+            <span style={{ fontWeight: 900, fontSize: 24, background: 'var(--blue)', color: '#fff', padding: '1px 10px', borderRadius: 6 }}>EXCEL</span>
           </div>
-          <h2 style={{ fontSize: '1.1rem', marginBottom: 4 }}>{mode === 'login' ? 'Welcome back' : 'Create account'}</h2>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            {mode === 'login' ? 'Sign in to your workspace' : 'Start your free account'}
-          </p>
+          <h2 style={{ fontSize: '1.2rem', color: '#fff', fontWeight: 600 }}>{mode === 'login' ? 'System Login' : 'Register Core'}</h2>
         </div>
 
-        {mode !== 'register' && (
-          <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-              {[
-                { icon: 'G', label: 'Continue with Google' },
-                { icon: 'M', label: 'Continue with Microsoft' },
-              ].map(b => (
-                <button
-                  key={b.label}
-                  className="btn btn-outline w-full"
-                  style={{ justifyContent: 'center', gap: 10 }}
-                  onClick={() => {
-                    dispatch(setUser({ name: 'Demo User', email: 'demo@google.com', plan: 'free' }));
-                    navigate('/dashboard');
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: '50%',
-                      background: b.icon === 'G' ? '#4285f4' : '#00a4ef',
-                      color: '#fff',
-                      fontSize: '0.6rem',
-                      fontWeight: 800,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {b.icon}
-                  </span>
-                  <span>{b.label}</span>
-                </button>
-              ))}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <div className="divider" style={{ flex: 1 }} />
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>or with email</span>
-              <div className="divider" style={{ flex: 1 }} />
-            </div>
-          </>
-        )}
+        {/* Social Buttons Section */}
+        <div style={{ display: 'flex', gap: 14, marginBottom: 28 }}>
+          <button className="social-btn" onClick={() => navigate('/dashboard')}>
+            <img 
+              className="google-icon" 
+              src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" 
+              alt="Google" 
+            />
+            Google
+          </button>
+          <button className="social-btn" onClick={() => navigate('/dashboard')}>
+            <svg className="ms-icon" viewBox="0 0 23 23">
+              <path fill="currentColor" d="M0 0h11v11H0zM12 0h11v11H12zM0 12h11v11H0zM12 12h11v11H12z"/>
+            </svg>
+            Microsoft
+          </button>
+        </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+          <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>manual_auth</span>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           {mode === 'register' && (
-            <div className="input-wrap">
-              <label className="input-label">Full Name</label>
-              <input className="input" type="text" placeholder="Krishna Koushik" value={name} onChange={e => setName(e.target.value)} />
-            </div>
+            <input style={inputStyle} type="text" placeholder="USER_FULL_NAME" value={name} onChange={e => setName(e.target.value)} required />
           )}
-          <div className="input-wrap">
-            <label className="input-label">Email</label>
-            <input className="input" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+          
+          <input style={inputStyle} type="email" placeholder="IDENTITY_EMAIL" value={email} onChange={e => setEmail(e.target.value)} required />
+
+          <div style={{ position: 'relative' }}>
+            <input 
+              style={inputStyle} 
+              type={showPass ? 'text' : 'password'} 
+              placeholder="ACCESS_PASSWORD" 
+              value={password} 
+              onChange={e => setPassword(e.target.value)} 
+              required 
+            />
+            <button 
+              type="button" 
+              onClick={() => setShowPass(!showPass)}
+              style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem', fontWeight: 800, cursor: 'pointer' }}
+            >
+              {showPass ? 'HIDE' : 'SHOW'}
+            </button>
           </div>
-          {mode !== 'register' && (
-            <div className="input-wrap">
-              <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Password</span>
-                <span
-                  style={{ color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 400 }}
-                  onClick={() => alert('Reset link sent (demo)')}
-                >
-                  Forgot?
-                </span>
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  className="input"
-                  type={showPass ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  style={{ paddingRight: 42 }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(p => !p)}
-                  style={{
-                    position: 'absolute',
-                    right: 10,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--text-muted)',
-                    fontSize: '0.7rem',
-                  }}
-                >
-                  {showPass ? 'Hide' : 'Show'}
-                </button>
-              </div>
-            </div>
-          )}
-          {error && (
-            <div style={{ padding: '8px 12px', background: 'var(--error-dim)', border: '1px solid var(--error)', borderRadius: 7, fontSize: '0.78rem', color: 'var(--error)' }}>
-              {error}
-            </div>
-          )}
-          <button type="submit" className="btn btn-primary w-full" style={{ justifyContent: 'center', marginTop: 4 }} disabled={loading}>
-            {loading ? (
-              <>
-                <span className="spinner" style={{ width: 13, height: 13 }} /> {mode === 'login' ? 'Signing in...' : 'Creating...'}
-              </>
-            ) : mode === 'login' ? (
-              'Sign in →'
-            ) : (
-              'Create account →'
-            )}
+
+          {error && <div style={{ fontSize: '0.75rem', color: '#ff5555', textAlign: 'center', background: 'rgba(255,85,85,0.1)', padding: '10px', borderRadius: 10 }}>{error}</div>}
+
+          <button 
+            type="submit" 
+            className="btn btn-primary btn-xl" 
+            style={{ justifyContent: 'center', width: '100%', marginTop: 6, fontWeight: 700, letterSpacing: '0.05em' }} 
+            disabled={loading}
+          >
+            {loading ? 'AUTHORIZING...' : mode === 'login' ? 'INITIALIZE →' : 'GENERATE →'}
           </button>
         </form>
 
-        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button
-            onClick={() => {
-              setMode(m => (m === 'login' ? 'register' : 'login'));
-              setError('');
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '0.78rem',
-              color: 'var(--text-muted)',
-              transition: 'color var(--tr)',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+        <div style={{ marginTop: 28, textAlign: 'center' }}>
+          <button 
+            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+            style={{ background: 'none', border: 'none', color: 'var(--blue)', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 500 }}
           >
-            {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-          </button>
-          <div className="divider" />
-          <button onClick={() => navigate('/dashboard')} className="btn btn-ghost w-full" style={{ justifyContent: 'center', fontSize: '0.78rem' }}>
-            Skip — continue as guest →
+            {mode === 'login' ? "// CREATE_NEW_IDENTITY" : "// RETURN_TO_LOGIN"}
           </button>
         </div>
-
-        {/* Demo accounts */}
-        {mode === 'login' && (
-          <div style={{ marginTop: 20, padding: '12px', background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 8 }}>
-            <div style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>
-              Demo Accounts
-            </div>
-            {DEMOS.map((d, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '6px 0',
-                  borderBottom: i < DEMOS.length - 1 ? '1px solid var(--border)' : 'none',
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text)' }}>{d.email}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                    pw: {d.pass} · {d.plan}
-                  </div>
-                </div>
-                <button className="btn btn-xs btn-outline" onClick={() => fillDemo(i)}>
-                  Use
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
-      <div style={{ position: 'absolute', bottom: 14, fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>
-        GPT-EXCEL v2.0 
+      <div style={{ position: 'absolute', bottom: 20, fontSize: '0.65rem', color: 'rgba(255,255,255,0.15)', fontFamily: 'monospace', letterSpacing: '0.15em' }}>
+        GPT-EXCEL_TERMINAL_V2.0 // ENCRYPTED_AUTH
       </div>
     </div>
   );
 }
+
+const inputStyle = { 
+  width: '100%', padding: '15px', background: 'rgba(255,255,255,0.03)', 
+  border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, color: '#fff', 
+  outline: 'none', fontSize: '0.9rem', fontFamily: 'monospace', transition: '0.2s'
+};
