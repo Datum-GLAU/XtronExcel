@@ -1,25 +1,33 @@
-# Install dependencies
-npm install
+# GPT-EXCEL – AI Spreadsheet Intelligence
 
-# Run development server
-npm run dev
+Desktop application built with Electron, React, and Python (FastAPI) to generate Excel files, documents, charts, and automation workflows using natural language.
 
 ---
 
-# 🐍 Python Engine (Backend)
-This is the Python-based backend engine for Excel GPT. It handles Excel processing, data analysis, chart generation, and prompt-based operations.
+## 🚀 Quick Start (Frontend + Electron)
 
---##  Setup (Backend)
+```bash
+npm install
+npm run dev
 
-### 1. Go to Python Engine folder
-```bash```
+The app will launch automatically.
+
+## 🐍 Python Backend (Excel Engine)
 cd python_engine
-
-# Install dependencies 
 pip install fastapi uvicorn pandas matplotlib openpyxl schedule xlsxwriter
-
-# Run server
 uvicorn main:app --reload
+Runs on: http://127.0.0.1:8000
+API Docs: http://127.0.0.1:8000/docs
 
-# Open API docs
-http://127.0.0.1:8000/docs
+Handles Excel generation, data processing, and chart creation.
+
+## 📦 Build
+npm run dist
+
+Production build will be available in the release/ folder.
+
+## ⚙️ Tech Stack
+Frontend: React + Electron
+Backend: Node.js (API layer)
+Python Engine: FastAPI, Pandas, OpenPyXL
+AI Integration: LLM APIs
