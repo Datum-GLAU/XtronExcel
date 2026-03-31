@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { RootState } from '../store';
+import { RootState } from '..';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import AIChatPanel from '../components/AIChatPanel';

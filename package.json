@@ -1,18 +1,18 @@
 {
   "name": "gpt-excel",
   "version": "1.0.0",
-  "main": "dist/main/main.js",
+  "main": "dist/main.js",
   "scripts": {
     "compile": "tsc -p tsconfig.node.json",
-    "dev": "cross-env NODE_ENV=development npm run compile && concurrently \"vite\" \"electron .\"",
-    "build": "npm run compile && vite build",
+    "dev": "cross-env NODE_ENV=development concurrently \"vite\" \"npm run compile && electron .\"",
+    "build": "vite build && npm run compile",
     "dist": "npm run build && electron-builder"
   },
   "build": {
-    "appId": "com.example.gpt-excel",
+    "appId": "com.datum.gptexcel",
     "productName": "GPT-EXCEL",
     "directories": { "output": "release" },
-    "files": [ "dist/**/*", "dist-react/**/*", "node_modules/**/*" ],
+    "files": ["dist/**/*", "dist-react/**/*", "node_modules/**/*"],
     "win": { "target": "nsis" },
     "mac": { "target": "dmg" },
     "linux": { "target": "AppImage" }
@@ -31,13 +31,10 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
-    "autoprefixer": "^10.4.27",
     "concurrently": "^8.2.2",
     "cross-env": "^10.1.0",
     "electron": "^31.3.1",
     "electron-builder": "^24.13.3",
-    "postcss": "^8.5.8",
-    "tailwindcss": "^3.4.19",
     "typescript": "^5.5.3",
     "vite": "^5.3.5"
   }

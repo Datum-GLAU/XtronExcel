@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState, setTheme } from '../store';
+import { RootState, setTheme } from '..';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 
