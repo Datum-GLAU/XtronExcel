@@ -5,4 +5,4 @@ openpyxl
 xlsxwriter
 matplotlib
 schedule
-python multipart
+python-multipart
