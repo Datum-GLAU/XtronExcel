@@ -38,8 +38,8 @@ Open a **third terminal**:
  
 ```bash
 cd python_engine
-pip install fastapi uvicorn pandas matplotlib openpyxl schedule xlsxwriter
-uvicorn main:app --reload
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8001
 ```
  
 Runs on: http://127.0.0.1:8000  
