@@ -176,17 +176,6 @@ async def create_word(file: UploadFile = File(...)):
     return {"message": result, "output_path": output_path}
 
 
-@app.post("/ppt")
-async def create_ppt(file: UploadFile = File(...)):
-    _validate_excel_filename(file.filename)
-    file_path = save_upload(file)
-    output_path = out("output_report.pptx")
-    result = generate_ppt(file_path, output_path=output_path)
-    file_id = _record_file(file_path)
-    save_generated_file(file_id, "pptx", output_path)
-    return {"message": result, "output_path": output_path}
-
-
 @app.post("/excel-advanced")
 async def create_advanced_excel(file: UploadFile = File(...)):
     _validate_excel_filename(file.filename)
