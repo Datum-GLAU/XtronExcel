@@ -29,7 +29,7 @@ import {
 const MODEL = "claude-haiku-4-5-20251001";
 const MAX_TOKENS = 1024;
 const MAX_ITERATIONS = 20;
-const GLOBAL_TIMEOUT_MS = 120_000; // 2 minutes
+const GLOBAL_TIMEOUT_MS = 60_000; // 1 minute
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 5000;
 
@@ -142,6 +142,7 @@ async function runAgent() {
 
       // Context compression: prune old read_sheet payloads from history
       // We skip the last two messages (the most recent assistant+user turn)
+      /* 
       if (messages.length > 3) {
         for (let i = 0; i < messages.length - 2; i++) {
           const msg = messages[i];
@@ -156,6 +157,7 @@ async function runAgent() {
           }
         }
       }
+      */
 
       iterations++;
       log("think", `Claude is reasoning... (iteration ${iterations}/${MAX_ITERATIONS})`);
@@ -264,6 +266,9 @@ async function runAgent() {
     const status = err.status ?? err.statusCode ?? "";
     const body = err.error ? JSON.stringify(err.error).substring(0, 300) : "";
     log("error", `Agent failed: ${status ? `[${status}] ` : ""}${err.message}`);
+    if (err.message && err.message.includes("EBUSY")) {
+       log("error", "The Excel file is currently open and locked by another program (likely MS Excel). Please close it so the agent can save changes.");
+    }
     if (body) log("error", `Response: ${body}`);
 
     try {

@@ -188,11 +188,11 @@ export function addChart(workbook, { sheet, type, title, dataRange, position }) 
 /**
  * Returns current sheet data as a JSON string so the agent can inspect it.
  */
-export function readSheet(workbook, { sheet, maxRows = 5 }) {
+export function readSheet(workbook, { sheet, maxRows = 3 }) {
   if (!sheet) return { error: "Invalid args: sheet is required" };
 
   // Hard cap to protect context window size
-  const limit = Math.min(maxRows, 20);
+  const limit = Math.min(maxRows, 3);
 
   const ws = workbook.getWorksheet(sheet);
   if (!ws) return { error: `Sheet "${sheet}" not found` };

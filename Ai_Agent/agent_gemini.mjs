@@ -166,6 +166,7 @@ async function runAgent() {
       }
 
       // Context compression for Gemini: prune old read_sheet JSON payloads
+      /*
       if (messages.length > 3) {
         for (let i = 0; i < messages.length - 2; i++) {
           const msg = messages[i];
@@ -180,6 +181,7 @@ async function runAgent() {
           }
         }
       }
+      */
 
       iterations++;
       log("think", `Gemini is reasoning... (iteration ${iterations}/${MAX_ITERATIONS})`);
@@ -282,6 +284,7 @@ async function runAgent() {
       }
       
       log("warn", "Unexpected Gemini response (no text, no function calls).");
+      log("warn", "Response payload: " + JSON.stringify(response, null, 2));
       break;
     }
 
@@ -296,6 +299,9 @@ async function runAgent() {
   } catch (err) {
     // ── Rollback on error ─────────────────────────────────────────────────
     log("error", `Agent failed: ${err.message}`);
+    if (err.message && err.message.includes("EBUSY")) {
+       log("error", "The Excel file is currently open and locked by another program (likely MS Excel). Please close it so the agent can save changes.");
+    }
 
     try {
       await restoreSnapshot(workbook, snapshot);
